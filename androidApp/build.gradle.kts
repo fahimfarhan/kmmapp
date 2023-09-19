@@ -14,7 +14,9 @@ android {
         versionName = "1.0"
     }
     buildFeatures {
-        compose = true
+        compose = false
+        viewBinding = true
+        dataBinding = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.7"
@@ -39,7 +41,14 @@ android {
 }
 
 dependencies {
+    // kmm android-ios shared module
     implementation(project(":shared"))
+    // AppCompatActivity
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.appcompat:appcompat-resources:1.6.1")
+    // ConstraintLayout
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    // Android compose
     implementation("androidx.compose.ui:ui:1.4.3")
     implementation("androidx.compose.ui:ui-tooling:1.4.3")
     implementation("androidx.compose.ui:ui-tooling-preview:1.4.3")

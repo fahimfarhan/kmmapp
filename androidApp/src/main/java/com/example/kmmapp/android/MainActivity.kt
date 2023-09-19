@@ -1,56 +1,58 @@
 package com.example.kmmapp.android
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.example.kmmapp.Greeting
+import com.example.kmmapp.android.databinding.ActivityMainBinding
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
+
+    private var _binding: ActivityMainBinding? = null
+    private val binding: ActivityMainBinding get() = _binding!!
+
+    private val mText: MutableStateFlow<String> = MutableStateFlow("Loading...")
+
+    private val mGreeting by lazy { Greeting() }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            MyApplicationTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colors.background
-                ) {
-                    // GreetingView(Greeting().greet())
+        _binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        initObserver()
+        makeApiCall()
+    }
 
-                    var text: String by remember { mutableStateOf("Loading") }
-
-                    LaunchedEffect(true) {
-                        text = try {
-                            Greeting().greet()
-                        } catch (x: Exception) {
-                            x.localizedMessage ?: "error"
-                        }
-                    }
-                    GreetingView(text = text)
-                }
+    private fun makeApiCall() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val responseText: String = try {
+                delay(5000)
+                mGreeting.greet()
+            } catch (x: Exception) {
+                x.printStackTrace()
+                x.localizedMessage ?: "error"
             }
+            mText.emit(responseText)
         }
     }
-}
+    private fun initObserver() {
+        lifecycleScope.launch(Dispatchers.Main) {
+            mText.collect { msg: String ->
+                binding.textView.text = msg
+            }
+        }
 
-@Composable
-fun GreetingView(text: String) {
-    Text(text = text)
-}
-
-@Preview
-@Composable
-fun DefaultPreview() {
-    MyApplicationTheme {
-        GreetingView("Hello, Android!")
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        _binding = null
+    }
+
 }
+
