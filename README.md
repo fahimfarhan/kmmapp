@@ -34,3 +34,6 @@ Finally, create a `res/layout/activity_main.xml`, and make some changes in `Main
 * [jetpack compose](https://developer.android.com/jetpack/compose/setup)
 * [jetpack compose tutorial](https://developer.android.com/jetpack/compose/tutorial)
 * [SqlDelight](https://cashapp.github.io/sqldelight/2.0.0/android_sqlite/)
+### Sharing viewModel
+* [KMM-ViewModel](https://github.com/rickclephas/KMM-ViewModel)
+* [multiplatform-presenters-or-viewmodels-the-lean-way-](https://proandroiddev.com/multiplatform-presenters-or-viewmodels-the-lean-way-cbb763c803af)
