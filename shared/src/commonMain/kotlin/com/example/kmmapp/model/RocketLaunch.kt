@@ -1,3 +1,5 @@
+package com.example.kmmapp.model
+
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime

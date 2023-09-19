@@ -1,5 +1,5 @@
 package com.example.kmmapp
-import RocketLaunch
+import com.example.kmmapp.model.RocketLaunch
 import io.ktor.client.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
