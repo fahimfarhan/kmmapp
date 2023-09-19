@@ -22,6 +22,7 @@ class SpaceXApi {
     suspend fun getAllLaunches(): List<RocketLaunch> {
         val httpResponse: HttpResponse = httpClient.get("https://api.spacexdata.com/v5/launches")
         val listOfRocketLaunches: List<RocketLaunch> = httpResponse.body<List<RocketLaunch>>()
+        println("listOfRocketLaunches = $listOfRocketLaunches")
         return listOfRocketLaunches
     }
 }
