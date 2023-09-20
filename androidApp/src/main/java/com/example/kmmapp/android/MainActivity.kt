@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -61,28 +60,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initObservers() {
-        lifecycleScope.launch {
-            spacexViewModel.liveErrorMsg.collectLatest { errorMsg ->
-                println("Inside onError -> errorMsg: $errorMsg")
-                if(errorMsg.isNullOrBlank()) {
-                    return@collectLatest
-                }
-                lifecycleScope.launch(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivity, errorMsg, Toast.LENGTH_SHORT).show()
-                }
+        spacexViewModel.liveErrorMsg.subscribe(onEach = { errorMsg ->
+            println("Inside onError -> errorMsg: $errorMsg")
+            if(errorMsg.isNullOrBlank()) {
+                return@subscribe
             }
-        }
+            Toast.makeText(this@MainActivity, errorMsg, Toast.LENGTH_SHORT).show()
+        }, {}, {})
 
-        lifecycleScope.launch {
-            spacexViewModel.flowOfRocketLaunches.collectLatest { rocketLaunches ->
+
+        spacexViewModel.flowOfRocketLaunches.subscribe(
+            onEach = { rocketLaunches ->
 //            lifecycleScope.launch(Dispatchers.Main) {
                 launchesRvAdapter.launches = rocketLaunches
                 launchesRvAdapter.notifyDataSetChanged()
                 binding.progressBar.visibility = View.GONE
-                println("inside onSuccess -> output = $rocketLaunches")
-//            }
+                println("inside onSuccess RX -> output = $rocketLaunches")
+            },
+            onComplete = {
+                println("inside onComplete")
+            },
+            onThrow = { throwable ->
+                println("inside on throw")
+                throwable.printStackTrace()
             }
-        }
+        )
     }
 
     private fun displayLaunches(needReload: Boolean) {

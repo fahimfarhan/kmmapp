@@ -1,7 +1,8 @@
 package com.jetbrains.handson.kmm.shared
 
 import com.example.kmmapp.model.RocketLaunch
-import com.jetbrains.handson.kmm.shared.viewmodel.KmpViewModel
+import com.jetbrains.handson.kmm.shared.viewmodel.BaseViewModel
+import com.jetbrains.handson.kmm.shared.viewmodel.FlowAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -9,7 +10,7 @@ import kotlinx.coroutines.launch
 
 class SpaceXViewModel(
     private val spacexRepository: SpaceXSDK
-): KmpViewModel() {
+): BaseViewModel() {
 
     companion object {
         var staticInstanceCount: Int = 0
@@ -20,13 +21,14 @@ class SpaceXViewModel(
         println("SpaceXViewModel staticInstanceCount = $staticInstanceCount")
     }
 
-    val flowOfRocketLaunches: MutableStateFlow<List<RocketLaunch>> by lazy {
+//    private val vmCallBack = VmCallBack(this)
+
+    private val _flowOfRocketLaunches: MutableStateFlow<List<RocketLaunch>> by lazy {
         MutableStateFlow<List<RocketLaunch>>(emptyList())
     }
+    val flowOfRocketLaunches: FlowAdapter<List<RocketLaunch>> get() = _flowOfRocketLaunches.asFlowAdapterCallbacks()
 
-    val liveErrorMsg: MutableStateFlow<String> by lazy {
-        MutableStateFlow("")
-    }
+    val liveErrorMsg: FlowAdapter<String> = _liveErrorMsg.asFlowAdapterCallbacks()
 
     fun asyncGetSpacexRocketLaunches(forceReload: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -36,12 +38,12 @@ class SpaceXViewModel(
                 output
             }.onSuccess { listOfRockedLaunches ->
                 println("inside onSuccess: listOfRocketLaunches: $listOfRockedLaunches")
-                flowOfRocketLaunches.emit(listOfRockedLaunches)
+                _flowOfRocketLaunches.emit(listOfRockedLaunches)
             }
             .onFailure {throwable ->
                 println("onFailure: throwableMsg: ${throwable.message}")
                 throwable.printStackTrace()
-                liveErrorMsg.emit(throwable.message ?: "Unknown Error")
+                _liveErrorMsg.emit(throwable.message ?: "Unknown Error")
             }
         }
     }
