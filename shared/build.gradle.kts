@@ -59,6 +59,13 @@ kotlin {
                 implementation("io.ktor:ktor-client-android:$ktorVersion")
                 // sql-delight android driver
                 implementation("app.cash.sqldelight:android-driver:$sqlDelightVersion")
+                // viewModel
+                val lifecycleVersion = "2.6.2"
+                val archVersion = "2.2.0"
+                // ViewModel
+                implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleVersion")
+                implementation("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleVersion")
+
             }
         }
 

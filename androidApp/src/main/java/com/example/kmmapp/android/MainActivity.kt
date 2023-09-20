@@ -5,17 +5,18 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.kmmapp.Greeting
 import com.example.kmmapp.android.databinding.ActivityMainBinding
+import com.example.kmmapp.viewmodelfactories.SpaceXVmFactory
 import com.jetbrains.handson.kmm.shared.SpaceXSDK
+import com.jetbrains.handson.kmm.shared.SpaceXViewModel
 import com.jetbrains.handson.kmm.shared.cache.DatabaseDriverFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -27,6 +28,13 @@ class MainActivity : AppCompatActivity() {
 
     private val sdk by lazy {
         SpaceXSDK(DatabaseDriverFactory(application))
+    }
+
+    private val spacexFactory by lazy {
+        SpaceXVmFactory(spacexRepository = sdk)
+    }
+    private val spacexViewModel: SpaceXViewModel by lazy {
+        ViewModelProvider(this, spacexFactory)[SpaceXViewModel::class.java]
     }
 
     private val mainScope by lazy {
@@ -47,26 +55,39 @@ class MainActivity : AppCompatActivity() {
             binding.swipeContainer.isRefreshing = false
             displayLaunches(true)
         }
-        displayLaunches(true)
+        displayLaunches(false)
+
+        initObservers()
+    }
+
+    private fun initObservers() {
+        lifecycleScope.launch {
+            spacexViewModel.liveErrorMsg.collectLatest { errorMsg ->
+                println("Inside onError -> errorMsg: $errorMsg")
+                if(errorMsg.isNullOrBlank()) {
+                    return@collectLatest
+                }
+                lifecycleScope.launch(Dispatchers.Main) {
+                    Toast.makeText(this@MainActivity, errorMsg, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            spacexViewModel.flowOfRocketLaunches.collectLatest { rocketLaunches ->
+//            lifecycleScope.launch(Dispatchers.Main) {
+                launchesRvAdapter.launches = rocketLaunches
+                launchesRvAdapter.notifyDataSetChanged()
+                binding.progressBar.visibility = View.GONE
+                println("inside onSuccess -> output = $rocketLaunches")
+//            }
+            }
+        }
     }
 
     private fun displayLaunches(needReload: Boolean) {
-        binding.progressBar.isVisible = true
-        mainScope.launch {
-            kotlin.runCatching {
-                val output = sdk.getLaunches(needReload)
-                println("inside MainActivity, output = $output")
-                output
-            }.onSuccess { listOfRocketLaunches ->
-                launchesRvAdapter.launches = listOfRocketLaunches
-                launchesRvAdapter.notifyDataSetChanged()
-                binding.progressBar.visibility = View.GONE
-                println("inside onSuccess -> output = $listOfRocketLaunches")
-            }.onFailure {
-                Toast.makeText(this@MainActivity, it.localizedMessage, Toast.LENGTH_SHORT).show()
-                println("inside onFailure error: ${it.localizedMessage}")
-            }
-        }
+        binding.progressBar.visibility = View.GONE // cz demo app, less bullshit
+        spacexViewModel.asyncGetSpacexRocketLaunches(needReload)
     }
 
 
