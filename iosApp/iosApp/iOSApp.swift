@@ -3,10 +3,11 @@ import shared
 
 @main
 struct iOSApp: App {
-    let sdk = SpaceXSDK(databaseDriverFactory: DatabaseDriverFactory())
+//    let sdk = SpaceXSDK(databaseDriverFactory: DatabaseDriverFactory())
+    let spacexViewModel = SpaceXViewModel(spacexRepository: SpaceXSDK(databaseDriverFactory: DatabaseDriverFactory()))
     var body: some Scene {
         WindowGroup {
-            ContentView(viewModel: .init(sdk: sdk))
+            ContentView(mainActorObserver: .init(spaceXViewModel: spacexViewModel))
         }
     }
 }

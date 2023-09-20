@@ -2,7 +2,7 @@ import SwiftUI
 import shared
 
 struct ContentView: View {
-  @ObservedObject private(set) var viewModel: ViewModel
+  @ObservedObject private(set) var mainActorObserver: MainActorObservableObject
 
     var body: some View {
         NavigationView {
@@ -10,13 +10,14 @@ struct ContentView: View {
             .navigationBarTitle("SpaceX Launches")
             .navigationBarItems(trailing:
                 Button("Reload") {
-                    self.viewModel.loadLaunches(forceReload: true)
+                self.mainActorObserver.spaceXViewModel.asyncGetSpacexRocketLaunches(forceReload: true)
             })
         }
     }
 
     private func listView() -> AnyView {
-        switch viewModel.launches {
+
+        switch mainActorObserver.launches {
         case .loading:
             return AnyView(Text("Loading...").multilineTextAlignment(.center))
         case .result(let launches):
@@ -29,6 +30,7 @@ struct ContentView: View {
     }
 }
 
+
 extension ContentView {
 
     enum LoadableLaunches {
@@ -38,27 +40,34 @@ extension ContentView {
     }
 
     @MainActor
-    class ViewModel: ObservableObject {
-        let sdk: SpaceXSDK
+    class MainActorObservableObject: ObservableObject {
+        let spaceXViewModel: SpaceXViewModel
         @Published var launches = LoadableLaunches.loading
 
-        init(sdk: SpaceXSDK) {
-            self.sdk = sdk
-            self.loadLaunches(forceReload: false)
+        init(spaceXViewModel: SpaceXViewModel) {
+            self.spaceXViewModel = spaceXViewModel
+            self.myObserve()
+            spaceXViewModel.asyncGetSpacexRocketLaunches(forceReload: true)
         }
 
-        func loadLaunches(forceReload: Bool) {
-            Task {
-                do {
-                    self.launches = .loading
-                    let launches = try await sdk.getLaunches(forceReload: forceReload)
-                    self.launches = .result(launches)
-                } catch {
-                    self.launches = .error(error.localizedDescription)
+        func myObserve() {
+
+            spaceXViewModel.flowOfRocketLaunches.subscribe { (nsArray: NSArray) in
+                let someRocketLaunches: [RocketLaunch]? = nsArray as? [RocketLaunch]
+                if(someRocketLaunches != nil) {
+                    self.launches = .result(someRocketLaunches!)
+                }
+            } onComplete: {
+                
+            } onThrow: { (mThrowable: KotlinThrowable) in
+                let mError: String? = mThrowable.message
+                if(mError != nil) {
+                    self.launches = .error(mError!)
                 }
             }
         }
     }
 }
+
 
 extension RocketLaunch: Identifiable { }
